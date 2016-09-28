@@ -10,6 +10,24 @@ config.read('config.ini')
 # Add your League_Key to the config.ini for this to work.
 league_key = config.get('Yahoo', 'League_Key')
 
+# Create the database
+db_name = 'fantasy_stats.sqlite'
+conn = sqlite3.connect(db_name)
+cur = conn.cursor()
+cur.executescript('''
+
+    CREATE TABLE IF NOT EXISTS FanStats (
+        week         INTEGER NOT NULL,
+        teamname     TEXT NOT NULL,
+        teamkey      TEXT NOT NULL,
+        teamid       INTEGER NOT NULL,
+        playername   TEXT NOT NULL,
+        disp_position TEXT NOT NULL,
+        position      TEXT NOT NULL,
+        points        FLOAT NOT NULL
+    );
+    ''')
+
 
 def get_teams():
     """Get the list of teams from Yahoo's API."""
@@ -30,25 +48,7 @@ def get_teams():
 
 
 def get_scores(teamlist, week):
-    """Gather scores and other data from each team's roster and add them to a database"""
-    # Create the database
-    conn = sqlite3.connect('fantasy_stats.sqlite'.format(week))
-    cur = conn.cursor()
-    cur.executescript('''
-        DROP TABLE IF EXISTS FanStats;
-
-        CREATE TABLE FanStats (
-            week         INTEGER NOT NULL,
-            teamname     TEXT NOT NULL,
-            teamkey      TEXT NOT NULL,
-            teamid       INTEGER NOT NULL,
-            playername   TEXT NOT NULL,
-            disp_position TEXT NOT NULL,
-            position      TEXT NOT NULL,
-            points        FLOAT NOT NULL
-        );
-        ''')
-
+    """Gather scores and other data from each team's roster and add them to a database."""
     for team in teamlist:
         # Get the roster data
         roster_uri = 'team/{}/roster;week={}/players/stats;type=week;week={}'.format(team[0], week, week)
@@ -66,11 +66,10 @@ def get_scores(teamlist, week):
                     'position']
                 # Get the points the player scored for the given week
                 player_points = get_points(r, n)
-                #print('{} -- {} -- {} -- {}'.format(full_name, display_position, position, player_points))
                 # Add all the stats to the database
                 cur.execute('''INSERT INTO FanStats
-                    (teamname, teamkey, teamid, playername, disp_position, position, points) VALUES ( ?, ?, ?, ?, ?, ?, ?)''',
-                            (team[0], team[1], team[2], full_name, display_position, position, player_points))
+                    (week, teamname, teamkey, teamid, playername, disp_position, position, points) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (week, team[0], team[1], team[2], full_name, display_position, position, player_points))
                 conn.commit()
 
 
@@ -93,29 +92,27 @@ def get_points(roster, n):
 
 
 def get_info(week):
-    conn = sqlite3.connect('fantasyweek{}.sqlite'.format(week))
-    c = conn.cursor()
     bpositions = ['QB', 'WR', 'RB', 'TE']
     print('WEEK {} LEADERS'.format(week))
-    # Benchwarmers
+    # Bench-warmers
     for pos in bpositions:
         templist = []
-        for row in c.execute('SELECT * FROM FanStats WHERE position = "BN" AND disp_position = ? ORDER BY points DESC LIMIT 2',(pos,)):
+        for row in cur.execute('SELECT * FROM FanStats WHERE position = "BN" AND disp_position = ? AND week = ? ORDER BY points DESC LIMIT 2', (pos, week)):
             templist.append(row)
-        print('The top two benchwarming {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
-            pos, templist[0][3], templist[0][2], templist[0][6], templist[1][3], templist[1][2], templist[1][6]))
+        print('The top two bench-warming {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
+            pos, templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
     # Top Guys
     positions = get_positions()
     for pos in positions:
         templist = []
-        for row in c.execute('SELECT * FROM FanStats WHERE position = ? ORDER BY points DESC LIMIT ?', (pos[0], pos[1])):
+        for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points DESC LIMIT ?', (pos[0], week, pos[1])):
             templist.append(row)
         if pos[1] == 1:
             print('The top {} was {} ({}) with {} points.'.format(
-                pos[0], templist[0][3], templist[0][2], templist[0][6]))
+                pos[0], templist[0][4], templist[0][3], templist[0][7]))
         elif pos[1] == 2:
             print('The top 2 {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
-                pos[0], templist[0][3], templist[0][2], templist[0][6], templist[1][3], templist[1][2], templist[1][6]))
+                pos[0], templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
         elif pos[1] > 2:
             phrase = '{} ({}) with {} points, '
             full_phrase = ''
@@ -124,7 +121,13 @@ def get_info(week):
             print('The top {} {}s were {} ({}) with {} points, {}and {} ({}) with {} points.'.format(
                 pos[1], pos[0], templist[0][3], templist[0][2], templist[0][6], full_phrase,
                 templist[-1][3], templist[-1][2], templist[-1][6]))
-
+    # Scrubs
+    for pos in positions:
+        templist = []
+        for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points ASC LIMIT 1',
+                           (pos[0], week)):
+            templist.append(row)
+        print('The worst {} was {} ({}) with {} points.'.format(pos[0], templist[0][4], templist[0][3], templist[0][7]))
     conn.commit()
 
 
@@ -153,8 +156,10 @@ def rostest(filename):
     with open('{}.txt'.format(filename), 'r') as openfile:
         return json.load(openfile)
 
-teamlist = get_teams()
-get_scores(teamlist, 3)
+#teamlist = get_teams()
+#get_scores(teamlist, 2)
+#get_scores(teamlist, 3)
 get_info(3)
+get_info(2)
 
 
