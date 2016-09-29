@@ -14,31 +14,52 @@ To use, simply run fantasyoutput.py. It will ask you for the weeks you want data
 
 WEEK 3 LEADERS
 
+
 --------Best Starters---------
+
 The top QB was Drew Brees (Gronky Kong) with 26.94 points.
+
 The top 2 WRs were T.Y. Hilton (The Walking Dez) with 23.4 points and T.Y. Hilton (The Walking Dez) with 23.4 points.
+
 The top 2 RBs were Devonta Freeman (Keenan and Bell) with 26.7 points and Devonta Freeman (Keenan and Bell) with 26.7 points.
+
 The top TE was Coby Fleener (Gronky Kong) with 16.9 points.
+
 The top W/R/T was Marvin Jones Jr. (Jamaal Rats) with 32.5 points.
+
 The top K was Justin Tucker (Living on a Prater) with 17.0 points.
+
 The top DEF was Kansas City (Armed Rodgery) with 35.0 points.
 
 
 -----Hottest Benchwarmers-----
+
 The top two benchwarming QBs were Matthew Stafford (Living on a Prater) with 27.5 points and Jameis Winston (Full Hauschka) with 26.5 points.
+
 The top two benchwarming WRs were DeSean Jackson (The Tolbert Report) with 15.6 points and Sterling Shepard (The Walking Dez) with 13.3 points.
+
 The top two benchwarming RBs were Tevin Coleman (Gronky Kong) with 26.9 points and Carlos Hyde (RussellMania) with 24.5 points.
+
 The top two benchwarming TEs were Zach Miller (Gronky Kong) with 19.8 points and Jimmy Graham (The Tolbert Report) with 14.0 points.
 
 
+
 --------Worst Starters--------
+
 The worst QB was Ryan Fitzpatrick (Keenan and Bell) with 3.72 points.
+
 The worst WR was Kelvin Benjamin (Keenan and Bell) with 0.0 points.
+
 The worst RB was Ryan Mathews (Gronky Kong) with -0.5 points.
+
 The worst TE was Vance McDonald (Luck Ness Monster) with 0.4 points.
+
 The worst W/R/T was Rashad Jennings (Gronky Kong) with 0.0 points.
+
 The worst K was Nick Novak (Jamaal Rats) with 0.0 points.
+
 The worst DEF was Pittsburgh (Full Hauschka) with -1.0 points.
+
 The worst BN was Devin Funchess (Jamaal Rats) with 0.0 points.
 
 # **Motivation**

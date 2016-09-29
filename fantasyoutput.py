@@ -104,16 +104,16 @@ def get_info(week):
     # Header
     make_output('\nWEEK {} LEADERS\n'.format(week))
     # Top Guys
-    make_output('{:-^30}'.format('Best Starters'))
+    make_output('{:-^30}\n'.format('Best Starters'))
     for pos in positions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points DESC LIMIT ?', (pos[0], week, pos[1])):
             templist.append(row)
         if pos[1] == 1:
-            make_output('The top {} was {} ({}) with {} points.'.format(
+            make_output('The top {} was {} ({}) with {} points.\n'.format(
                 pos[0], templist[0][4], templist[0][3], templist[0][7]))
         elif pos[1] == 2:
-            make_output('The top 2 {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
+            make_output('The top 2 {}s were {} ({}) with {} points and {} ({}) with {} points.\n'.format(
                 pos[0], templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
         # Allow for more than 'top 2', but disregard benched players.
         elif pos[1] > 2 and pos[0] != 'BN':
@@ -121,27 +121,27 @@ def get_info(week):
             full_phrase = ''
             for i in range(pos[1]-2):
                 full_phrase += phrase.format(templist[i+1][4], templist[i+1][3], templist[i+1][7])
-            make_output('The top {} {}s were {} ({}) with {} points, {}and {} ({}) with {} points.'.format(
+            make_output('The top {} {}s were {} ({}) with {} points, {}and {} ({}) with {} points.\n'.format(
                 pos[1], pos[0], templist[0][4], templist[0][3], templist[0][7], full_phrase,
                 templist[-1][4], templist[-1][3], templist[-1][7]))
     make_output('\n')
     # Benchwarmers
-    make_output('{:-^30}'.format('Hottest Benchwarmers'))
+    make_output('{:-^30}\n'.format('Hottest Benchwarmers'))
     for pos in bpositions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = "BN" AND disp_position = ? AND week = ? ORDER BY points DESC LIMIT 2', (pos, week)):
             templist.append(row)
-        make_output('The top two benchwarming {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
+        make_output('The top two benchwarming {}s were {} ({}) with {} points and {} ({}) with {} points.\n'.format(
             pos, templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
     make_output('\n')
     # Scrubs
-    make_output('{:-^30}'.format('Worst Starters'))
+    make_output('{:-^30}\n'.format('Worst Starters'))
     for pos in positions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points ASC LIMIT 1',
                            (pos[0], week)):
             templist.append(row)
-        make_output('The worst {} was {} ({}) with {} points.'.format(pos[0], templist[0][4], templist[0][3], templist[0][7]))
+        make_output('The worst {} was {} ({}) with {} points.\n'.format(pos[0], templist[0][4], templist[0][3], templist[0][7]))
 
     conn.commit()
 
