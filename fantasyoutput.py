@@ -9,6 +9,9 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 # Add your League_Key to the config.ini for this to work.
 league_key = config.get('Yahoo', 'League_Key')
+# Select how you want text output. Default is "Print". "Save" will append the text to a file named under saved_text
+output_mode = "Save"
+saved_text = "default_fantasy_stats.txt"
 
 # Create the database
 db_name = 'fantasy_stats.sqlite'
@@ -24,7 +27,8 @@ cur.executescript('''
         playername   TEXT NOT NULL,
         disp_position TEXT NOT NULL,
         position      TEXT NOT NULL,
-        points        FLOAT NOT NULL
+        points        FLOAT NOT NULL,
+        unique (week, playername)
     );
     ''')
 
@@ -37,19 +41,19 @@ def get_teams():
     # Get the number of teams in the league
     num_teams = d['fantasy_content']['league'][0]['num_teams']
     # Store team key, id, and name for each team in a list
-    teamlist = []
+    team_list = []
     for i in range(num_teams):
         #
         teamkey = d['fantasy_content']['league'][1]['teams'][str(i)]['team'][0][0]['team_key']
         teamid = d['fantasy_content']['league'][1]['teams'][str(i)]['team'][0][1]['team_id']
         teamname = d['fantasy_content']['league'][1]['teams'][str(i)]['team'][0][2]['name']
-        teamlist.append((teamkey, teamid, teamname))
-    return teamlist
+        team_list.append((teamkey, teamid, teamname))
+    return team_list
 
 
-def get_scores(teamlist, week):
+def get_scores(team_list, week):
     """Gather scores and other data from each team's roster and add them to a database."""
-    for team in teamlist:
+    for team in team_list:
         # Get the roster data
         roster_uri = 'team/{}/roster;week={}/players/stats;type=week;week={}'.format(team[0], week, week)
         r = handle.api_req(roster_uri).json()
@@ -67,7 +71,7 @@ def get_scores(teamlist, week):
                 # Get the points the player scored for the given week
                 player_points = get_points(r, n)
                 # Add all the stats to the database
-                cur.execute('''INSERT INTO FanStats
+                cur.execute('''INSERT OR REPLACE INTO FanStats
                     (week, teamname, teamkey, teamid, playername, disp_position, position, points) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)''',
                             (week, team[0], team[1], team[2], full_name, display_position, position, player_points))
                 conn.commit()
@@ -98,18 +102,18 @@ def get_info(week):
     # A list of positions to consider regarding benched player performance
     bpositions = ['QB', 'WR', 'RB', 'TE']
     # Header
-    print('WEEK {} LEADERS'.format(week))
+    make_output('\nWEEK {} LEADERS\n'.format(week))
     # Top Guys
-    print('{:-^30}'.format('Best Starters'))
+    make_output('{:-^30}'.format('Best Starters'))
     for pos in positions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points DESC LIMIT ?', (pos[0], week, pos[1])):
             templist.append(row)
         if pos[1] == 1:
-            print('The top {} was {} ({}) with {} points.'.format(
+            make_output('The top {} was {} ({}) with {} points.'.format(
                 pos[0], templist[0][4], templist[0][3], templist[0][7]))
         elif pos[1] == 2:
-            print('The top 2 {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
+            make_output('The top 2 {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
                 pos[0], templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
         # Allow for more than 'top 2', but disregard benched players.
         elif pos[1] > 2 and pos[0] != 'BN':
@@ -117,25 +121,27 @@ def get_info(week):
             full_phrase = ''
             for i in range(pos[1]-2):
                 full_phrase += phrase.format(templist[i+1][4], templist[i+1][3], templist[i+1][7])
-            print('The top {} {}s were {} ({}) with {} points, {}and {} ({}) with {} points.'.format(
+            make_output('The top {} {}s were {} ({}) with {} points, {}and {} ({}) with {} points.'.format(
                 pos[1], pos[0], templist[0][4], templist[0][3], templist[0][7], full_phrase,
                 templist[-1][4], templist[-1][3], templist[-1][7]))
+    make_output('\n')
     # Benchwarmers
-    print('{:-^30}'.format('Hottest Benchwarmers'))
+    make_output('{:-^30}'.format('Hottest Benchwarmers'))
     for pos in bpositions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = "BN" AND disp_position = ? AND week = ? ORDER BY points DESC LIMIT 2', (pos, week)):
             templist.append(row)
-        print('The top two benchwarming {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
+        make_output('The top two benchwarming {}s were {} ({}) with {} points and {} ({}) with {} points.'.format(
             pos, templist[0][4], templist[0][3], templist[0][7], templist[1][4], templist[1][3], templist[1][7]))
+    make_output('\n')
     # Scrubs
-    print('{:-^30}'.format('Worst Starters'))
+    make_output('{:-^30}'.format('Worst Starters'))
     for pos in positions:
         templist = []
         for row in cur.execute('SELECT * FROM FanStats WHERE position = ? AND week = ? ORDER BY points ASC LIMIT 1',
                            (pos[0], week)):
             templist.append(row)
-        print('The worst {} was {} ({}) with {} points.'.format(pos[0], templist[0][4], templist[0][3], templist[0][7]))
+        make_output('The worst {} was {} ({}) with {} points.'.format(pos[0], templist[0][4], templist[0][3], templist[0][7]))
 
     conn.commit()
 
@@ -154,6 +160,14 @@ def get_positions():
     return poslist
 
 
+def make_output(s):
+    if output_mode == "Print":
+        print(s)
+    elif output_mode == "Save":
+        with open(saved_text, 'a') as openfile:
+            openfile.write(s + '\n')
+
+
 def jsondump(filename, querystring):
     """Save json as txt file, for testing purposes."""
     with open('{}.txt'.format(filename), 'w') as outfile:
@@ -165,10 +179,23 @@ def rostest(filename):
     with open('{}.txt'.format(filename), 'r') as openfile:
         return json.load(openfile)
 
-#teamlist = get_teams()
-#get_scores(teamlist, 2)
-#get_scores(teamlist, 3)
-get_info(3)
-get_info(2)
+
+def run(week_list):
+    """Input is a list of ints."""
+    team_list = get_teams()
+    for week in week_list:
+        get_scores(team_list, week)
+        get_info(week)
+
+while True:
+    try:
+        week_list = [int(x) for x in input(
+            "Please enter the week(s) you would like to obtain data for. Separate numbers with a space.").split()]
+        break
+    except ValueError:
+        print("Invalid input. Example input: 1 2 10")
+        continue
+
+run(week_list)
 
 

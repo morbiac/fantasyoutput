@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# xyhandler is used and modified with the permission of its original creator, Daniel Mai.
+# The original xyhandler can be found at https://github.com/danielmai/xyhandler
+
 #import requests
 from rauth import OAuth1Service
 import webbrowser
