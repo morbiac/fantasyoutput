@@ -187,6 +187,7 @@ def run(week_list):
         get_scores(team_list, week)
         get_info(week)
 
+
 while True:
     try:
         week_list = [int(x) for x in input(
@@ -197,5 +198,4 @@ while True:
         continue
 
 run(week_list)
-
 
